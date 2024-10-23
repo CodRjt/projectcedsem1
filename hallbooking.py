@@ -1,4 +1,5 @@
 import sqlite3
+import webbrowser
 import tkinter as tk
 from tkinter import messagebox
 conn=sqlite3.connect('hall_booking.db')
@@ -32,6 +33,8 @@ label=tk.Label(win,text="Welcome to room booking services!",font=("Arial",16))
 label.pack(pady=20)
 entryf=tk.Entry(win)
 entryf.pack(pady=10,ipady=4)
+def open():
+    webbrowser.open("https://www.bing.com/images/search?view=detailV2&ccid=7fVxhpak&id=A4DB9460503CF8640F0AD9666999C6E360B1A476&thid=OIP.7fVxhpakei6G3ZF_19Oa6QHaG6&mediaurl=https%3a%2f%2fwww.thecoderpedia.com%2fwp-content%2fuploads%2f2020%2f06%2fCoding-Jokes-Programmer-Life-1024x955.jpg%3fx80061&exph=955&expw=1024&q=coding+meme&simid=608025202273358452&FORM=IRPRST&ck=323B3663AB93676F7EAF610CF5B7582B&selectedIndex=1&itb=0")
 def getus():
     user_input=entryf.get()
 entry=tk.Entry(win,width=30)
@@ -164,7 +167,7 @@ menu=tk.Menu(win)
 win.config(menu=menu)
 file_menu=tk.Menu(menu,tearoff=0)
 menu.add_cascade(label="File",menu=file_menu)
-file_menu.add_command(label="Help")
+file_menu.add_command(label="Help",command=open())
 file_menu.add_command(label="Exit",command=win.quit)
 file_menu.add_command(label="New",command=refresh())
 win.bind("<Return>",lambda event:getFields())
