@@ -24,19 +24,46 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS booking (
     FOREIGN KEY (user_id) REFERENCES Users(user_id),
     FOREIGN KEY (buildingName, Room_No) REFERENCES HALLS(buildingName, Room_No)
 );''')
+who="user"
 win =tk.Tk()
 win.title("CED Project 005")
 win.geometry("400x300")
 label=tk.Label(win,text="Welcome to room booking services!",font=("Arial",16))
+whov = tk.StringVar(value=f"You are signed in as {who}")
+labelwho=tk.Label(win,textvariable=whov,font=("Arial",16))
+labelwho.pack(pady=10)
+def adminsign():
+    subwin=tk.Toplevel(win)
+    subwin.geometry("300x200")
+    subwin.title("signin")
+    labelsw1=tk.Label(subwin,text="Sign in for admin privledge")
+    labelsw1.pack(padx=10,pady=10)
+    labelsw2=tk.Label(subwin,text="Enter the password")
+    labelsw2.pack(padx=0,pady=10)
+    entrysw=tk.Entry(subwin)
+    entrysw.pack(pady=10)
+
+    def getus():
+        password=entrysw.get()
+        if password=="1234":
+            global who
+            who="admin"
+            whov.set(f"You are signed in as {who}")
+            subwin.destroy()
+            messagebox.showinfo("Signed in as admin","Welcome admin")  
+        else:
+            messagebox.showinfo("Incorrect Password","The Password is Incorrect")
+            return
+    button2=tk.Button(subwin,text="Enter",command=getus)
+    button2.pack(pady=10)
+    subwin.bind("<Return>",lambda event:getus())
 #button = tk.Button(win,text="Click Me",command=onbc)
 #button.pack(pady=20)
 label.pack(pady=20)
-entryf=tk.Entry(win)
-entryf.pack(pady=10,ipady=4)
+
 def open():
-    webbrowser.open("https://www.bing.com/images/search?view=detailV2&ccid=7fVxhpak&id=A4DB9460503CF8640F0AD9666999C6E360B1A476&thid=OIP.7fVxhpakei6G3ZF_19Oa6QHaG6&mediaurl=https%3a%2f%2fwww.thecoderpedia.com%2fwp-content%2fuploads%2f2020%2f06%2fCoding-Jokes-Programmer-Life-1024x955.jpg%3fx80061&exph=955&expw=1024&q=coding+meme&simid=608025202273358452&FORM=IRPRST&ck=323B3663AB93676F7EAF610CF5B7582B&selectedIndex=1&itb=0")
-def getus():
-    user_input=entryf.get()
+    webbrowser.open("https://anmol02122005.github.io/CED-Project-/")
+
 entry=tk.Entry(win,width=30)
 entry.pack(pady=10,ipady=4)
 def roomExists(buildingName:str,roomId:str):
@@ -44,6 +71,12 @@ def roomExists(buildingName:str,roomId:str):
     result=cursor.fetchone()
     if result is None:
         messagebox.showinfo("Invalid Room","Room is not available for booking or does not exists")
+        return 0
+    else:
+        return 1
+def authenticate():
+    if who!="admin":
+        messagebox.showinfo("Permission denied","You need admin priviledge to do that")
         return 0
     else:
         return 1
@@ -76,9 +109,14 @@ def processInstruction():
         win.quit()
     elif tokens[0]=="delete"  and length==2:
         deleteTable(tokens[1])
+    elif tokens[0]=="edit" and length==5:
+        editRoom(tokens[1],tokens[2],int(tokens[3]),int(tokens[4]))
     else:
         messagebox.showinfo("Invalid Command","Please enter a valid command")
     entry.delete(0, tk.END)    
+'''def combinedcommands(event=None):
+    getFields()  
+    getus()'''
 def valid(val):
     try:
         return int(val)  
@@ -92,32 +130,35 @@ def run():
     valid(tokens[4])
 
 def deleteTable(Table_name:str):
-    try:
-        cursor.execute(f'''DELETE FROM {Table_name}''')  
-        conn.commit()
-        messagebox.showinfo("Success", f"All records in '{Table_name}' deleted.")
-    except sqlite3.OperationalError as t:
-        messagebox.showerror("Error", f"Failed to delete table '{Table_name}': {t}")
-def getFields():
+    if authenticate():
+        try:
+            cursor.execute(f'''DELETE FROM {Table_name}''')  
+            conn.commit()
+            messagebox.showinfo("Success", f"All records in '{Table_name}' deleted.")
+        except sqlite3.OperationalError as t:
+            messagebox.showerror("Error", f"Failed to delete table '{Table_name}': {t}")
+def getFields(event=None):
     global tokens
     user_input=entry.get()
     tokens= user_input.split()
     processInstruction()
     #messagebox.showinfo("Input",f"You entered:{user_input.split()}")
 def addRoom(buildingName:str,roomId:str):
-    cursor.execute('SELECT * FROM Halls WHERE buildingName = ? AND Room_No = ? ', (buildingName, int(roomId) ))  
-    result=cursor.fetchone()
-    if result is None:
-        cursor.execute('INSERT INTO HALLS VALUES (?, ?)', (buildingName, int(roomId)))
-        conn.commit()
-        messagebox.showinfo("Success", f"Room {roomId} in {buildingName} added.")
-    else:
-         messagebox.showinfo("Duplicate entry", f"Room {roomId} in {buildingName} already exists.")
+    if authenticate():
+        cursor.execute('SELECT * FROM Halls WHERE buildingName = ? AND Room_No = ? ', (buildingName, int(roomId) ))  
+        result=cursor.fetchone()
+        if result is None:
+            cursor.execute('INSERT INTO HALLS VALUES (?, ?)', (buildingName, int(roomId)))
+            conn.commit()
+            messagebox.showinfo("Success", f"Room {roomId} in {buildingName} added.")
+        else:
+            messagebox.showinfo("Duplicate entry", f"Room {roomId} in {buildingName} already exists.")
 def removeRoom(buildingName:str,roomId:str):
-    if roomExists(buildingName,roomId):
-        cursor.execute('DELETE FROM HALLS WHERE buildingName = ? AND Room_No = ?', (buildingName, int(roomId)))
-        conn.commit()
-        messagebox.showinfo("Success", f"Room {roomId} in {buildingName} removed.") 
+    if authenticate():
+        if roomExists(buildingName,roomId):
+            cursor.execute('DELETE FROM HALLS WHERE buildingName = ? AND Room_No = ?', (buildingName, int(roomId)))
+            conn.commit()
+            messagebox.showinfo("Success", f"Room {roomId} in {buildingName} removed.") 
 def reserveRoom(buildingName:str,roomId:str,startTime:int,endTime:int):
     if roomExists(buildingName,roomId):
         cursor.execute('SELECT * FROM booking WHERE buildingName= ? AND Room_No = ? AND (startTime < ? AND endTime > ?)',  (buildingName, int(roomId), endTime, startTime))
@@ -131,6 +172,9 @@ def reserveRoom(buildingName:str,roomId:str,startTime:int,endTime:int):
                 messagebox.showinfo("Success", f"Room {roomId} in {buildingName} booked from {startTime} to {endTime}.")
             else:
                 messagebox.showinfo("Invalid Command", "Start and end times must be between 0 and 23.")
+def editRoom(buildingName:str,roomId:str,startTime:int,endTime:int):
+    cancelRoom(buildingName,roomId,startTime,endTime)
+    reserveRoom(buildingName,roomId,startTime,endTime)
 def cancelRoom(buildingName:str,roomId:str,startTime:int,endTime:int):
     roomExists(buildingName,roomId)
     cursor.execute('SELECT * FROM booking WHERE buildingName = ? AND Room_No = ? AND startTime = ? AND endTime = ?', (buildingName, int(roomId), startTime, endTime))  
@@ -149,7 +193,8 @@ def displayRooms():
         messagebox.showinfo("Available Rooms", rooms_list)
     else:
         messagebox.showinfo("Available Rooms", "No rooms available.")
-
+def signout():
+    who="user"
 def displayTimeSlots():
     cursor.execute('''select buildingName,Room_No,startTime, endTime from booking''')
     slots = cursor.fetchall()
@@ -163,12 +208,17 @@ def refresh():
 
 input_button=tk.Button(win,text="Enter",command=getFields)
 input_button.pack(pady=10)
-menu=tk.Menu(win)
-win.config(menu=menu)
-file_menu=tk.Menu(menu,tearoff=0)
-menu.add_cascade(label="File",menu=file_menu)
-file_menu.add_command(label="Help",command=open())
+menubar=tk.Menu(win)
+win.config(menu=menubar)
+file_menu=tk.Menu(menubar,tearoff=0)
+sign_menu=tk.Menu(menubar,tearoff=0)
+menubar.add_cascade(label="File",menu=file_menu)
+menubar.add_cascade(label="Sign_in",menu=sign_menu)
+file_menu.add_command(label="Help",command=open)
+file_menu.add_command(label="New",command=refresh)
+file_menu.add_separator()
 file_menu.add_command(label="Exit",command=win.quit)
-file_menu.add_command(label="New",command=refresh())
+sign_menu.add_command(label="admin",command=adminsign)
+sign_menu.add_command(label="signout",command=signout)
 win.bind("<Return>",lambda event:getFields())
 win.mainloop()
