@@ -1,0 +1,54 @@
+int countValidWords(char sentence[]) {
+    int d=0;
+    int p=0,hy=0;
+    int vwords=0;
+    int checkhy(int ihypen){
+        if (sentence[ihypen-1]>='a' && sentence[ihypen-1]<='z' && sentence[ihypen+1]<='z' && sentence[ihypen+1]>='a' ){
+            return 1;
+        }
+        else{
+            return 0;
+        }
+    }
+    int checkp(int imark){
+        if (sentence[imark+1]==' '|| '\0'){
+            return 1;
+        }
+        else{
+            return 0;
+        }
+    }
+    int c=0,j=0,m=0;
+    char token[1000][1000];
+    void vd(){
+        int k=0;
+        
+        while(sentence[c]!=' '){
+            token[j][k++]=sentence[c++];
+           }
+            token[j][k]='\0';
+            for(int i=0;i<k;i++){
+                if(token[j][i]=='-'){
+                    hy+=checkhy(i);
+                }
+            }
+                
+            for(int i=0;i<k;i++){
+                if(token[j][i]=='!'||'.'||',' && i==k-1){
+                    p+=checkp(i);
+                }
+            }
+            
+            if (hy==1 && p==1 ){
+                vwords++;
+                hy=0;
+                p=0;
+            }
+        
+    }
+    while (sentence[c]!='\0'){
+            j++;
+            vd();
+    }
+ return vwords;
+}
