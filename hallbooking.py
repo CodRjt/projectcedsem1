@@ -6,24 +6,17 @@ from tkinter import ttk
 from tkinter import messagebox
 conn=sqlite3.connect('hall_booking.db')
 cursor=conn.cursor()
-#cursor.execute('''CREATE TABLE IF NOT EXISTS Users (
-#              user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-#               user_name TEXT NOT NULL
-#               );''')'''
 cursor.execute('''CREATE TABLE IF NOT EXISTS HALLS(
                buildingName TEXT NOT NULL ,
                 Room_No Integer not null,
                 Primary key(buildingName,Room_No) 
                );''')
 cursor.execute('''CREATE TABLE IF NOT EXISTS booking (
-    booking_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
     buildingName TEXT NOT NULL,
     Room_No INTEGER,
     booking_date TEXT,
     startTime INTEGER,
     endTime INTEGER,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id),
     FOREIGN KEY (buildingName, Room_No) REFERENCES HALLS(buildingName, Room_No)
 );''')
 who="user"
@@ -31,9 +24,6 @@ global n
 n=0
 win =tk.Tk()
 win.title("CED Project 005")
-'''style=ttk.Style()
-style.theme_use("clam")
-win.configure(bg="#2E2E2E")'''
 win.geometry("400x300")
 label=tk.Label(win,text="Welcome to room booking services!",font=("Arial",16))
 global whov
@@ -80,8 +70,6 @@ def adminsign():
     button2=tk.Button(subwin,text="Enter",command=getus)
     button2.pack(pady=10)
     subwin.bind("<Return>",lambda event:getus())
-#button = tk.Button(win,text="Click Me",command=onbc)
-#button.pack(pady=20)
 label.pack(pady=20)
 j=0
 def open():
@@ -195,7 +183,6 @@ def getFields(event=None):
     user_input=entry.get()
     tokens= user_input.split()
     processInstruction()
-    #messagebox.showinfo("Input",f"You entered:{user_input.split()}")
 def addRoom(buildingName:str,roomId:str):
     if authenticate():
         cursor.execute('SELECT * FROM Halls WHERE buildingName = ? AND Room_No = ? ', (buildingName, int(roomId) ))  
@@ -245,7 +232,7 @@ def cancelRoom(buildingName:str,roomId:str,startTime:int,endTime:int):
         conn.commit()
 
 def displayRooms():
-   #  showrooms():
+   # showrooms
 
     cursor.execute('''select * from HALLS''')
     rooms = cursor.fetchall()
@@ -259,8 +246,7 @@ def displayRooms():
             tree.column("Building_Name", width=150,anchor="center")
             tree.column("Room_No", width=100,anchor="center")
             tree.pack(fill="both",expand=True)
-        #rooms_list = "\n".join([f"{room[0]}, {room[1]}" for room in rooms])
-        #messagebox.showinfo("Available Rooms", rooms_list)
+        
             for room in rooms:
                 tree.insert("", "end", values=(room[0].capitalize(), room[1]))
     else:
