@@ -138,25 +138,56 @@ def processInstruction():
         whichtable()
     elif tokens[0]=="edit" and length==7:
         editRoom(tokens[1],tokens[2],int(tokens[3]),int(tokens[4]),int(tokens[5]),int(tokens[6]))
+    elif tokens[0]=="search" and length == 3:
+        searchroom(tokens[1],tokens[2])
     else:
         messagebox.showinfo("Invalid Command","Please enter a valid command")
         j=1
 if j!=1:
     entry.delete(0, tk.END)    
     j=0
+def searchroom(buildingName:str,roomId:str):
+    if roomExists(buildingName,roomId) :
+        cursor.execute('''select buildingName,Room_No,startTime, endTime from booking where  buildingName=? AND Room_No=? ''',(buildingName,int(roomId)))
+        reservations=cursor.fetchall()
+        if reservations:
+            showroom=tk.Tk()
+            showroom.title(f"Bookings of {buildingName}")
+            showroom.geometry("500x400")
+            frame=tk.Frame(showroom)
+            frame.pack(pady=20)
+            tree=ttk.Treeview(showroom,columns=("Building_Name","Room_No","StartTime","EndTime"),show="headings")
+            tree.heading("Building_Name", text="Building_Name")
+            tree.heading("Room_No", text="Room_No")
+            tree.heading("StartTime", text="StartTime")
+            tree.heading("EndTime", text="EndTime")
+            tree.column("Building_Name", width=150,anchor="center")
+            tree.column("Room_No", width=100,anchor="center")
+            tree.column("StartTime", width=100,anchor="center")
+            tree.column("EndTime", width=100,anchor="center")
+            tree.pack(fill="both",expand=True)
+            tree.pack()
+
+            for res in reservations:
+                tree.insert("","end",values=(res[0].capitalize(), res[1],res[2],res[3]))
+        else:
+            messagebox.showinfo("NO Bookings made","No bookings have been made for this room")
+
+
 def whichtable():
-    global tabs
-    tabs=tk.Tk()
-    tabs.title("Select records to delete")
-    tabs.geometry("400x200")
-    global listbox
-    listbox = tk.Listbox(tabs, selectmode=tk.MULTIPLE, height=5)
-    options = ["HALLS", "booking"] 
-    for option in options:
-        listbox.insert(tk.END,option)
-    listbox.pack(pady=10)
-    btn = tk.Button(tabs, text="Submit", command=choices)
-    btn.pack(pady=10)
+    if authenticate():
+        global tabs
+        tabs=tk.Tk()
+        tabs.title("Select records to delete")
+        tabs.geometry("400x200")
+        global listbox
+        listbox = tk.Listbox(tabs, selectmode=tk.MULTIPLE, height=5)
+        options = ["HALLS", "booking"] 
+        for option in options:
+            listbox.insert(tk.END,option)
+        listbox.pack(pady=10)
+        btn = tk.Button(tabs, text="Submit", command=choices)
+        btn.pack(pady=10)
 def valid(val):
     try:
         return int(val)  
@@ -170,25 +201,24 @@ def run():
     valid(tokens[3])
     valid(tokens[4])
 def choices():
-    choicesmade=listbox.curselection()  # Get the indices of the selected items
+    choicesmade=listbox.curselection()  
     for i in choicesmade:
         deleteTable(listbox.get(i))
     tabs.destroy()
     
-def deleteTable(Table_name:str):
-    if authenticate():
-        cursor.execute(f'''Select * FROM {Table_name}''') 
-        data=cursor.fetchone()
-        if data: 
-            try:
-                cursor.execute(f'''DELETE FROM {Table_name}''')  
-                conn.commit()
-                winsound.Beep(900,100)
-                messagebox.showinfo("Success", f"All records in '{Table_name}' deleted.")
-            except sqlite3.OperationalError as t:
-                messagebox.showerror("Error", f"Failed to delete table '{Table_name}': {t}")
-        else:
-             messagebox.showerror("No Data found", f"'{Table_name} is already empty'")
+def deleteTable(Table_name:str): 
+    cursor.execute(f'''Select * FROM {Table_name}''') 
+    data=cursor.fetchone()
+    if data: 
+        try:
+            cursor.execute(f'''DELETE FROM {Table_name}''')  
+            conn.commit()
+            winsound.Beep(900,100)
+            messagebox.showinfo("Success", f"All records in '{Table_name}' deleted.")
+        except sqlite3.OperationalError as t:
+            messagebox.showerror("Error", f"Failed to delete table '{Table_name}': {t}")
+    else:
+         messagebox.showerror("No Data found", f"'{Table_name} is already empty'")
 def getFields(event=None):
     
     global tokens
@@ -221,7 +251,7 @@ def reserveRoom(buildingName:str,roomId:str,startTime:int,endTime:int):
         result=cursor.fetchone()
         if result:
             winsound.Beep(500,300)
-            messagebox.showinfo("Sorry","This slot is already booked")
+            messagebox.showinfo("Sorry","This slot portion of this slot is already booked ")
         else:
             if 0<=startTime<24 and 0<=endTime<24:
                 cursor.execute('INSERT INTO booking (buildingName, Room_No, startTime, endTime) VALUES (?, ?, ?, ?)', (buildingName, int(roomId), startTime, endTime))
@@ -243,6 +273,7 @@ def cancelRoom(buildingName:str,roomId:str,startTime:int,endTime:int):
     else:
         cursor.execute('DELETE FROM booking WHERE buildingName = ? AND Room_No = ? AND startTime = ? AND endTime = ?', (buildingName, int(roomId), startTime, endTime))
         conn.commit()
+        messagebox.showinfo("Slot delete",f"Booking of {roomId} in {buildingName} from {startTime} to {endTime} deleted")
 
 def displayRooms():
    #  showrooms():
